@@ -1,0 +1,49 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,viewport-fit=cover">
+<meta name="theme-color" content="#101523">
+<title>星球捕手 · 30 秒挑战</title>
+<style>
+:root{color-scheme:dark;--bg:#101523;--panel:#192236;--muted:#9ca9c1;--cyan:#72e5ff;--pink:#ff7ab6;--gold:#ffd36e}
+*{box-sizing:border-box}body{margin:0;min-height:100vh;display:grid;place-items:center;padding:24px;background:radial-gradient(ellipse at 50% 0,#283658 0,#101523 60%);font-family:Inter,ui-sans-serif,system-ui,-apple-system,"Segoe UI",sans-serif;color:#f6f8ff}
+.game{width:min(100%,620px)}.top{display:flex;align-items:center;justify-content:space-between;margin:0 4px 14px}.brand{font-size:13px;letter-spacing:.16em;text-transform:uppercase;color:var(--cyan);font-weight:800}.badge{font-size:12px;color:var(--muted);border:1px solid #34415a;border-radius:99px;padding:7px 11px}
+h1{font-size:clamp(30px,7vw,46px);line-height:1.05;margin:0 0 9px;letter-spacing:-.04em}.sub{color:var(--muted);margin:0;font-size:14px}
+.stats{display:grid;grid-template-columns:repeat(3,1fr);gap:10px;margin:22px 0 12px}.stat{background:#192236cc;border:1px solid #2a3650;border-radius:15px;padding:12px 15px}.label{font-size:11px;text-transform:uppercase;letter-spacing:.09em;color:var(--muted)}.value{font-variant-numeric:tabular-nums;font-size:25px;font-weight:800;margin-top:3px}.value.time{color:var(--gold)}
+.arena{height:min(55vh,390px);min-height:260px;position:relative;overflow:hidden;border-radius:22px;border:1px solid #34415a;background:radial-gradient(ellipse at center,#1d2942 0,#131b2b 74%);box-shadow:0 22px 70px #0005;touch-action:manipulation}
+.arena:before,.arena:after{content:"";position:absolute;inset:0;background-image:radial-gradient(1px 1px at 12% 20%,#fff9 50%,transparent),radial-gradient(1px 1px at 75% 32%,#fff8 50%,transparent),radial-gradient(1px 1px at 35% 78%,#fff7 50%,transparent),radial-gradient(1px 1px at 88% 84%,#fff9 50%,transparent),radial-gradient(1px 1px at 58% 15%,#fff7 50%,transparent);pointer-events:none}.arena:after{background:radial-gradient(ellipse at center,transparent 35%,#080c16aa 100%)}
+.target{display:none;position:absolute;z-index:1;width:64px;height:64px;border:0;border-radius:50%;cursor:pointer;background:radial-gradient(circle at 35% 30%,#fff 0 4%,#a8f3ff 6% 12%,#4bdcfb 24%,#1687dc 68%,#1055a0);box-shadow:0 0 18px #3bceff99,0 0 48px #1687dc55;transform:translate(-50%,-50%);transition:width .08s,height .08s;animation:pop .14s ease-out}
+.target:before{content:"";position:absolute;inset:10px;border-radius:50%;border:1px solid #ffffff77}.target:active{width:57px;height:57px}
+@keyframes pop{from{scale:.4;opacity:.5}to{scale:1;opacity:1}}
+.overlay{position:absolute;inset:0;z-index:2;display:grid;place-items:center;text-align:center;padding:20px;background:#10182755;backdrop-filter:blur(2px)}.overlay.hidden{display:none}.card{max-width:350px}.orb{font-size:42px;margin-bottom:9px}.card h2{font-size:22px;margin:0 0 8px}.card p{color:#b3bfd3;font-size:14px;line-height:1.65;margin:0 0 18px}
+button.primary{border:0;border-radius:12px;padding:12px 22px;font-weight:800;font-size:14px;color:#08202b;background:linear-gradient(135deg,#9bf0ff,#4bcff6);cursor:pointer;box-shadow:0 8px 22px #41c8ed33}button.primary:hover{filter:brightness(1.08);transform:translateY(-1px)}
+.hint{text-align:center;color:#8492aa;font-size:12px;margin:13px 0 0}.hint b{color:#b9c6da}
+@media(max-width:480px){body{padding:18px}.stat{padding:10px 12px}.value{font-size:22px}.arena{min-height:300px}}
+</style>
+</head>
+<body>
+<main class="game">
+ <div class="top"><div class="brand">✦ Mini Arcade</div><div class="badge">一局 30 秒</div></div>
+ <h1>星球捕手</h1><p class="sub">在星球消失前点中它，看看你能拿多少分。</p>
+ <section class="stats" aria-label="游戏数据">
+  <div class="stat"><div class="label">得分</div><div class="value" id="score">0</div></div>
+  <div class="stat"><div class="label">剩余时间</div><div class="value time"><span id="time">30</span><small style="font-size:13px"> 秒</small></div></div>
+  <div class="stat"><div class="label">最高纪录</div><div class="value" id="best">0</div></div>
+ </section>
+ <div class="arena" id="arena" aria-label="游戏区域">
+  <button class="target" id="target" aria-label="点击星球得分"></button>
+  <div class="overlay" id="overlay"><div class="card"><div class="orb">🪐</div><h2 id="message">准备好了吗？</h2><p id="detail">点击开始，在 30 秒内尽可能多地捕捉星球。每点中一次得 1 分。</p><button class="primary" id="start">开始游戏</button></div></div>
+ </div>
+ <p class="hint">小提示：星球会不断换位置，<b>眼疾手快</b>就是高分秘诀。</p>
+</main>
+<script>
+(()=>{const arena=document.querySelector('#arena'),target=document.querySelector('#target'),overlay=document.querySelector('#overlay'),scoreEl=document.querySelector('#score'),timeEl=document.querySelector('#time'),bestEl=document.querySelector('#best'),startBtn=document.querySelector('#start'),message=document.querySelector('#message'),detail=document.querySelector('#detail');let score=0,time=30,timer=null,playing=false;let best=Number(localStorage.getItem('planet-catcher-best')||0);bestEl.textContent=best;
+function moveTarget(){const pad=38,w=arena.clientWidth,h=arena.clientHeight;target.style.left=(pad+Math.random()*(w-pad*2))+'px';target.style.top=(pad+Math.random()*(h-pad*2))+'px';}
+function finish(){playing=false;clearInterval(timer);target.style.display='none';const record=score>best;if(record){best=score;localStorage.setItem('planet-catcher-best',best);bestEl.textContent=best}message.textContent=record&&score>0?'新纪录！':'时间到！';detail.textContent='你捕捉了 '+score+' 颗星球。'+(record&&score>0?' 这是你的最佳成绩！':' 再来一局挑战自己吧。');startBtn.textContent='再玩一次';overlay.classList.remove('hidden')}
+function begin(){score=0;time=30;playing=true;scoreEl.textContent=score;timeEl.textContent=time;overlay.classList.add('hidden');target.style.display='block';moveTarget();clearInterval(timer);timer=setInterval(()=>{time--;timeEl.textContent=time;if(time<=0)finish()},1000)}
+startBtn.addEventListener('click',begin);target.addEventListener('click',()=>{if(!playing)return;score++;scoreEl.textContent=score;moveTarget()});window.addEventListener('resize',()=>{if(playing)moveTarget()});
+})();
+</script>
+</body>
+</html>
